@@ -1,0 +1,6 @@
+streamlit
+pdfplumber
+azure-search-documents
+azure-core
+python-dotenv
+langchain-openai
