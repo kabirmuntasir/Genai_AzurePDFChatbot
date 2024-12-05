@@ -39,6 +39,7 @@ def create_search_index():
             SearchableField(name="file_name", type=SearchFieldDataType.String, filterable=True),
             SearchableField(name="content", type=SearchFieldDataType.String),
             SearchableField(name="content_summary", type=SearchFieldDataType.String),
+            SearchableField(name="primary_business_name", type=SearchFieldDataType.String, filterable=True),  # Add primary_business_name field
             SimpleField(name="type", type=SearchFieldDataType.String, filterable=True),
             SimpleField(name="page_num", type=SearchFieldDataType.Int32, filterable=True)  # Add page_num field
         ]
@@ -47,7 +48,9 @@ def create_search_index():
         semantic_config = SemanticConfiguration(
             name="semantic-config",
             prioritized_fields=SemanticPrioritizedFields(
-                content_fields=[SemanticField(field_name="content_summary")]
+                title_field=SemanticField(field_name="primary_business_name"),  # Use primary_business_name as title field
+                content_fields=[SemanticField(field_name="content_summary")],
+                keywords_fields=[SemanticField(field_name="type")]
             )
         )
         
@@ -70,6 +73,7 @@ def create_search_index():
 def extract_pdf_content(file_path):
     """Extract structured content from a PDF file, including text and tables."""
     content = []
+    primary_business_name = None
     with pdf_open(file_path) as pdf:
         # Store all pages content for analysis
         pages_content = {}
@@ -78,6 +82,14 @@ def extract_pdf_content(file_path):
         for page_num, page in enumerate(pdf.pages):
             current_content = page.extract_text()
             pages_content[page_num] = current_content
+            
+            # Extract Primary Business Name from the first page
+            if page_num == 0:
+                lines = current_content.split('\n')
+                for line in lines:
+                    if "Primary Business Name:" in line:
+                        primary_business_name = line.split("Primary Business Name:")[1].strip()
+                        break
         
         # Second pass - calculate diff content
         for page_num in range(len(pages_content)):
@@ -98,13 +110,24 @@ def extract_pdf_content(file_path):
                 unique_content = '\n'.join(unique_lines)
             
             if unique_content.strip():  # Only add non-empty content
-                content.append({"type": "text", "data": unique_content, "page_num": page_num})
+                content.append({
+                    "type": "text",
+                    "data": unique_content,
+                    "page_num": page_num,
+                    "primary_business_name": primary_business_name  # Add primary_business_name to each document
+                })
             
             # Extract tables
             tables = pdf.pages[page_num].extract_tables()
             for table_num, table in enumerate(tables):
                 if table and len(table) > 1 and len(table[0]) > 1:
-                    content.append({"type": "table", "data": table, "page_num": page_num, "table_num": table_num})
+                    content.append({
+                        "type": "table",
+                        "data": table,
+                        "page_num": page_num,
+                        "table_num": table_num,
+                        "primary_business_name": primary_business_name  # Add primary_business_name to each document
+                    })
     
     return content
 
@@ -124,10 +147,11 @@ def upload_to_search(documents, file_name):
         formatted_doc = {
             "id": doc_id,  # Required unique ID
             "file_name": file_name,  # Store the original file name
-            "content": content,  # Store original document as JSON string
-            "content_summary": summary,  # Store generated summary
+            "primary_business_name": doc["primary_business_name"],  # Add primary_business_name to the document
             "type": doc["type"],  # Keep type for filtering
-            "page_num": doc["page_num"]  # Store page number for reference
+            "page_num": doc["page_num"],  # Store page number for reference
+            "content": content,  # Store original document as JSON string
+            "content_summary": summary  # Store generated summary
         }
         formatted_docs.append(formatted_doc)
         print(f"Formatted document ID: {doc_id}, Type: {doc['type']}, Page: {doc['page_num']}")  # Debug log
