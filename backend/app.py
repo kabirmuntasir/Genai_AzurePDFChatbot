@@ -13,10 +13,10 @@ if not os.path.exists("uploads"):
     os.makedirs("uploads")
 
 def main():
-    st.title("Financial PDF Content Extraction and Query")
+    st.title("Advanced AI Assistant for Financial/Investment Content")
     
     # Upload PDF file
-    uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
+    uploaded_file = st.file_uploader("Add a PDF file", type="pdf")
     
     if uploaded_file is not None:
         pdf_path = os.path.join("uploads", uploaded_file.name)
@@ -24,15 +24,15 @@ def main():
             f.write(uploaded_file.getbuffer())
         st.success(f"Uploaded file: {uploaded_file.name}")
         
-        if st.button("Preprocess and Upload Content"):
-            with st.spinner("Preprocessing the PDF content..."):
-                st.text("Creating search index...")
+        if st.button("Process file"):
+            with st.spinner("Processing the PDF content..."):
+                st.text("Checking search index...")
                 preprocessing.create_search_index()
                 st.text("Extracting content from the PDF...")
                 extracted_content = preprocessing.extract_pdf_content(pdf_path)
-                st.text("Uploading extracted content to Azure Cognitive Search...")
+                st.text("Uploading extracted content to knowledge base...")
                 preprocessing.upload_to_search(extracted_content, uploaded_file.name)
-                st.success("Ready for user query || Ask any question of the documents.")
+                st.success("Ready for user query || Please ask question.")
     
     if "conversation" not in st.session_state:
         st.session_state.conversation = []
