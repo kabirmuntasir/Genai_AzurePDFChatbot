@@ -8,7 +8,7 @@ def query_search(query):
         query_type=QueryType.SEMANTIC,
         semantic_configuration_name="semantic-config",
         top=5,  # Limit results to reduce context size
-        select="content,content_summary,type,primary_business_name"  # Explicitly select fields
+        select="id,content,content_summary,type,primary_business_name,page_num"  # Explicitly select fields
     )
     # Add debug logging
     print("Search Results:")

@@ -50,8 +50,24 @@ def main():
         
         answer = generate_answer(prompt)
         
-        # Add the question and answer to the conversation history
-        st.session_state.conversation.append({"question": user_query, "answer": answer})
+        # Identify the best match document
+        best_match = next((doc for doc in search_results if doc["type"] == "text"), None)
+        table_match = next((doc for doc in search_results if doc["type"] == "table"), None)
+        
+        # Consolidate source information
+        sources = []
+        if best_match:
+            sources.append(f"Document ID: {best_match['id']}, Page Number: {best_match['page_num']}")
+        if table_match:
+            sources.append(f"Document ID: {table_match['id']}, Page Number: {table_match['page_num']}")
+        source_info = "  |  ".join(sources)
+        
+        # Add the question, answer, and consolidated source information to the conversation history
+        st.session_state.conversation.append({
+            "question": user_query,
+            "answer": answer,
+            "source": source_info
+        })
         
         # Clear the input field by resetting the key
         st.rerun()
@@ -67,6 +83,12 @@ def main():
         st.markdown(
             f'<div style="text-align: left; margin: 10px 0; padding: 10px; background-color: #f1f1f1; border-radius: 10px;">'
             f'<strong>Answer:</strong> {entry["answer"]}'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+        st.markdown(
+            f'<div style="text-align: left; margin: 10px 0; padding: 10px; background-color: #f1f1f1; border-radius: 10px;">'
+            f'<strong>Source:</strong> {entry["source"]}'
             f'</div>',
             unsafe_allow_html=True
         )

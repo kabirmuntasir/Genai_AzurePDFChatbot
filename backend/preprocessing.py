@@ -113,7 +113,7 @@ def extract_pdf_content(file_path):
                 content.append({
                     "type": "text",
                     "data": unique_content,
-                    "page_num": page_num,
+                    "page_num": page_num + 1, # Adjust page number to start from 1
                     "primary_business_name": primary_business_name  # Add primary_business_name to each document
                 })
             
@@ -124,7 +124,7 @@ def extract_pdf_content(file_path):
                     content.append({
                         "type": "table",
                         "data": table,
-                        "page_num": page_num,
+                        "page_num": page_num + 1, # Adjust page number to start from 1
                         "table_num": table_num,
                         "primary_business_name": primary_business_name  # Add primary_business_name to each document
                     })
